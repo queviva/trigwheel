@@ -1,0 +1,960 @@
+<!doctype html>
+<html>
+
+<head>
+    
+    <title>trigWheel</title>
+
+    <style>
+    
+        #canvas0 {
+            position: absolute;
+            /*width:500px;*/
+            height: 100%;
+            left: 200px;
+            top: 10px;
+            /*border:1px solid #000;*/
+            /*background-color:#cfc;*/
+        }
+        
+        #menu {
+            position: absolute;
+            top: 2px;
+            right: 0px;
+            padding: 0px;
+            background-color: #fff;
+            overflow: hidden;
+            transition: all 0.2s linear;
+        }
+        
+        input {
+            height: 30px;
+            width: 150px;
+            font-size: 22px;
+            visibility: visible;
+            outline: none;
+        }
+        
+        input[type=range] {
+            -webkit-appearance: none;
+            background-color: #c0c0c0;
+            border-radius: 15px;
+        }
+        
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            background-color: #666;
+            opacity: 0.5;
+            width: 30px;
+            height: 30px;
+            border: 2px solid #000;
+            border-radius: 15px;
+            transition: opacity 0.2s linear;
+        }
+        
+        input[type="range"]:disabled {
+            background-color: #eee;
+        }
+        
+        input[type=range]:disabled::-webkit-slider-thumb {
+            /*display:none;*/
+            opacity: 0.05;
+            transition: opacity 0.2s linear;
+        }
+        
+        input[type=checkbox] {
+            height: 30px;
+            width: 30px;
+            vertical-align: middle;
+            visibility: visible;
+        }
+        
+        label {
+            font-size: 26px;
+        }
+        
+    </style>
+
+</head>
+
+<body bgcolor="#ffffff">
+
+    <canvas id="canvas0" height="500" width="500"></canvas>
+    
+    <div id="menu">
+
+        <input id="armColorInput" type="color" value="#ffffff">
+        <br>
+        <input id="sinColorInput" type="color" value="#ffffff">
+        <br>
+        <input id="cosColorInput" type="color" value="#ffffff">
+        <br>
+        <input id="lineWidthInput" type="range" min="1" max="10" value="8">
+        <br>
+        <input id="angCapSizeInput" type="range" min="10" max="100" value="42" disabled="true">
+        <br>
+        <input id="displayCapBox" type="checkbox">
+        <label for="displayCapBox"> show cap </label>
+        <br>
+        <input id="displaySinBox" type="checkbox">
+        <label for="displaySinBox"> show sin </label>
+        <br>
+        <input id="displayCosBox" type="checkbox">
+        <label for="displayCosBox"> show cos </label>
+        <br>
+        <input id="displayArcBox" type="checkbox">
+        <label for="displayArcBox"> show arc </label>
+        <br>
+        <input id="displayAxiBox" type="checkbox">
+        <label for="displayAxiBox"> show axi </label>
+        <br>
+        <input id="snapToAnglesBox" type="checkbox">
+        <label for="snapToAnglesBox"> snap to </label>
+        <br>
+        <input id="degRadButton" type="button" value="DEG | rad" disabled="true">
+        <br>
+        <hr>
+        <input id="resetDefaultsButt" type="button" value="~ ~ ~ ~ ~">
+        <br>
+
+    </div>
+
+<script>
+
+// debugg - reset local storage
+//localStorage.clear();
+
+(function() { // anonymouse closure
+
+    var pizzaface,
+    
+    // useful vars
+    pi = Math.PI,
+    pi2 = 2 * Math.PI,
+    pi6 = Math.PI / 6,
+    pageCenter = {
+        x: 0,
+        y: 0
+    },
+    chars = {
+        pi: '\u03c0',
+        theta: '\u03b8',
+        deg: '\u00b0',
+        root: '\u221a'
+    },
+    snapCaps = [{
+        rad: '0',
+        sin: '0',
+        cos: '1'
+    }, {
+        rad: chars.pi + '/6',
+        sin: '1/2',
+        cos: chars.root + '3/2'
+    }, {
+        rad: chars.pi + '/3',
+        sin: chars.root + '3/2',
+        cos: '1/2'
+    }, {
+        rad: chars.pi + '/2',
+        sin: '1',
+        cos: '0'
+    }, {
+        rad: '2' + chars.pi + '/3',
+        sin: chars.root + '3/2',
+        cos: '-1/2 '
+    }, {
+        rad: '5' + chars.pi + '/6',
+        sin: '1/2',
+        cos: '-' + chars.root + '3/2'
+    }, {
+        rad: chars.pi,
+        sin: '0',
+        cos: '-1'
+    }, {
+        rad: '7' + chars.pi + '/6',
+        sin: '-1/2 ',
+        cos: '-' + chars.root + '3/2'
+    }, {
+        rad: '4' + chars.pi + '/3',
+        sin: '-' + chars.root + '3/2',
+        cos: '-1/2 '
+    }, {
+        rad: '3' + chars.pi + '/2',
+        sin: '-1 ',
+        cos: '0'
+    }, {
+        rad: '5' + chars.pi + '/3',
+        sin: '-' + chars.root + '3/2',
+        cos: '1/2'
+    }, {
+        rad: '11' + chars.pi + '/6',
+        sin: '-1/2 ',
+        cos: chars.root + '3/2'
+    }, {
+        rad: '2' + chars.pi,
+        sin: '0',
+        cos: '1'
+    }, {
+        rad: chars.pi + '/4',
+        sin: chars.root + '2/2',
+        cos: chars.root + '2/2'
+    }, {
+        rad: chars.pi + '/4',
+        sin: chars.root + '2/2',
+        cos: chars.root + '2/2'
+    }, {
+        rad: '3' + chars.pi + '/4',
+        sin: chars.root + '2/2',
+        cos: '-' + chars.root + '2/2'
+    }, {
+        rad: '3' + chars.pi + '/4',
+        sin: chars.root + '2/2',
+        cos: '-' + chars.root + '2/2'
+    }, {
+        rad: '5' + chars.pi + '/4',
+        sin: '-' + chars.root + '2/2',
+        cos: '-' + chars.root + '2/2'
+    }, {
+        rad: '5' + chars.pi + '/4',
+        sin: '-' + chars.root + '2/2',
+        cos: '-' + chars.root + '2/2'
+    }, {
+        rad: '7' + chars.pi + '/4',
+        sin: '-' + chars.root + '2/2',
+        cos: chars.root + '2/2'
+    }, {
+        rad: '7' + chars.pi + '/4',
+        sin: '-' + chars.root + '2/2',
+        cos: chars.root + '2/2'
+    }],
+
+    canvas = document.getElementById('canvas0'),
+    context = canvas.getContext('2d'),
+    centerX = canvas.width / 2,
+    centerY = canvas.height / 2,
+    theta = 0,
+
+    // default preferences for restoration
+    defPrefs = {
+        appName: 'Trig_Wheel',
+        hideMenuOnOpen: false,
+        menuHidden: false,
+        displayCap: false,
+        displaySin: true,
+        displayCos: true,
+        displayArc: true,
+        displayAxi: true,
+        showCircle: true,
+        snapToAngles: false,
+        degRad: true,
+        snapCapsVal: 0,
+        snapDif: 5,
+        armSize: {
+            min: 50,
+            max: 250,
+            val: 210
+        },
+        armColor: '#000000', //'#ffbb00',//'#eeaa00',
+        sinColor: '#cc3300',
+        cosColor: '#668866',
+        axiColorHi: '#000000',
+        axiColorLo: 'rgba(0,0,0,1.00)',
+        lineWidth: 8,
+        arcOffset: 40,
+        arcAdjust: 90,
+        angCapSize: 42,
+        curTheta: pi6,
+        deltaX: -1 * Math.sqrt(3),
+        deltaY: 1 
+
+    },
+
+    // preferences ...
+    prefs = {};
+
+    // method to store prefs locally
+    function storePrefs() {
+        localStorage.setItem(defPrefs.appName, JSON.stringify(prefs));
+    }
+
+    // method to reset all preferences to defaults
+    var resetDefaultPreferences = function() {
+
+        // blank the prefs
+        prefs = {};
+
+        // change all operating preferences back to default
+        for (var i in defPrefs) {
+            // parse this so it's not a pointer
+            prefs[i] = JSON.parse(JSON.stringify(defPrefs[i]));
+        }
+
+        // store the defaults as the local preferences
+        storePrefs();
+
+    }
+
+    // either read prefs from local storage, or use defaults and set local
+    if (localStorage[defPrefs.appName]) {
+        prefs = JSON.parse(localStorage[defPrefs.appName]);
+    }
+    else {
+        resetDefaultPreferences();
+    }
+
+    // setup everthing from prefs
+    function setUpFromPreferences() {
+
+        // calculate the page center
+        pageCenter.x = (window.innerWidth / 2);
+        pageCenter.y = (window.innerHeight / 2);
+
+        // move the canvas to the center of the page
+        canvas.style.left = pageCenter.x - canvas.offsetWidth / 2 + 'px';
+        canvas.style.top = pageCenter.y - canvas.offsetHeight / 2 + 'px';
+
+        // set the color changers to the prefs color values
+        armColorInput.value = prefs.armColor;
+        sinColorInput.value = prefs.sinColor;
+        cosColorInput.value = prefs.cosColor;
+
+        // set the show trig vals to their prefs
+        displayCapBox.checked = prefs.displayCap;
+        displaySinBox.checked = prefs.displaySin;
+        displayCosBox.checked = prefs.displayCos;
+        displayArcBox.checked = prefs.displayArc;
+        displayAxiBox.checked = prefs.displayAxi;
+        snapToAnglesBox.checked = prefs.snapToAngles;
+        degRadButton.value = prefs.degRad ? 'DEG | rad' : 'deg | RAD';
+        degRadButton.disabled = !prefs.displayCap;
+
+        // set the slider values to their prefs
+        lineWidthInput.value = prefs.lineWidth;
+        angCapSizeInput.value = prefs.angCapSize;
+        angCapSizeInput.disabled = !prefs.displayCap;
+
+        // start at the previous or default angle
+        theta = Math.atan2(prefs.deltaY, prefs.deltaX);
+
+    }
+
+    // listen for mouse moving on the entire body, and rotate the armiture
+    window.addEventListener('mousemove', e => {
+
+        // compute the angle of rotation between the mouse and the center
+        var deltaX = pageCenter.x - e.pageX;
+        var deltaY = pageCenter.y - e.pageY;
+
+        // make sure mouse is not AT the center
+        if (Math.sqrt(deltaX * deltaX + deltaY * deltaY) < 20) {
+            return;
+        }
+
+        // else, calculate the angle
+        theta = Math.atan2(deltaY, deltaX);
+        
+        // store deltas
+        prefs.deltaY = deltaY;
+        prefs.deltaX = deltaX;
+
+
+        redraw();
+
+    }, false);
+
+    function redraw() {
+        
+        //  adjust theta for the rand mcnally universe
+        var displayTheta = pi - theta;
+
+        // create a degrees version
+        var degTheta = 360 * displayTheta / pi2;
+        
+        // prevent the arm from looping
+        if (degTheta < 180 && prefs.curTheta > 300) {
+
+            // it's a loop, lock at THREE-SIXTY degrees
+            displayTheta = 0;
+            degTheta = 360;
+
+        }
+        else if (degTheta > 180 && prefs.curTheta < 120) {
+
+            // it's a loop, lock at ZERO degrees
+            displayTheta = pi2;
+            degTheta = 0;
+
+        }
+        else {
+
+            // save the current rotation for next time
+            prefs.curTheta = degTheta;
+
+        }
+
+        // if snapping is on ...
+        if (prefs.snapToAngles) {
+
+            // check if close to a multiple of 30deg angle ...
+            if (degTheta % 30 > (30 - prefs.snapDif) || degTheta % 30 < prefs.snapDif) {
+
+                // reset theta to an exact multiple of 30 degrees
+                degTheta = Math.round(degTheta / 30) * 30;
+                // reset the display theta to radians of that deg
+                displayTheta = (degTheta / 360) * pi2;
+
+            }
+            // otherwise check if close to multiple of 45deg ...
+            else if (degTheta % 45 > (45 - prefs.snapDif) || degTheta % 45 < prefs.snapDif) {
+
+                // reset theta to an exact multiple of 45 degrees
+                degTheta = Math.round(degTheta / 45) * 45;
+                // reset the display theta to radians of that deg
+                displayTheta = (degTheta / 360) * pi2;
+
+            }
+
+            // set the snapCapsVal - check if a %30deg angle
+            if (degTheta % 30 === 0) {
+                prefs.snapCapsVal = Math.round(degTheta / 30);
+            }
+            // check if a %45deg angle
+            else if (degTheta % 45 === 0) {
+                prefs.snapCapsVal = 12 + Math.round(degTheta / 45);
+            }
+            // otherwise just make the index negative
+            else {
+                prefs.snapCapsVal = -1;
+            }
+
+        }
+
+        // calculate trig vals adjusted for rand mcnally universe
+        var tmpSin = prefs.armSize.val * Math.sin(-displayTheta);
+        var tmpCos = prefs.armSize.val * Math.cos(displayTheta);
+
+        // clear the canvas for redraw
+        context.clearRect(0, 0, canvas.width, canvas.height);
+
+        // draw the axis-circle if needed
+        if (prefs.showCircle) {
+
+            context.beginPath();
+            context.arc(
+                centerX,
+                centerY,
+                prefs.armSize.val,
+                0,
+                pi2,
+                true
+            );
+            context.strokeStyle = prefs.axiColorHi;
+            context.lineWidth = 1;
+            context.stroke();
+            context.closePath();
+
+        }
+
+        // draw the axiseses if needed
+        if (prefs.displayAxi) {
+
+            // draw x-axis
+            context.beginPath();
+            context.moveTo(0, centerY);
+            context.lineTo(centerX * 2, centerY);
+            // if armature is over x-axis, make it lighter
+            context.strokeStyle = Math.abs(Math.tan(displayTheta)) < 0.01 ? prefs.axiColorLo : prefs.axiColorHi;
+            context.lineWidth = 1;
+            context.stroke();
+            context.closePath();
+
+            // draw y-axis
+            context.beginPath();
+            context.moveTo(centerX, 0);
+            context.lineTo(centerX, centerY * 2);
+            // if armature is over y-axis, make it lighter
+            context.strokeStyle = Math.abs(Math.tan(displayTheta)) > 12 ? prefs.axiColorLo : prefs.axiColorHi;
+            context.lineWidth = 1;
+            context.stroke();
+            context.closePath();
+
+        }
+
+        // draw snapTo points if needed
+        if (prefs.snapToAngles) {
+
+            // draw all the %30deg angle dots
+            for (var i = 0, j = 12; i < j; i++) {
+
+                context.beginPath();
+                context.arc(
+                    centerX + (prefs.armSize.val * Math.cos(i * pi6)),
+                    centerY + (prefs.armSize.val * Math.sin(i * pi6)),
+                    2,
+                    0,
+                    pi2,
+                    true
+                );
+
+                context.fillStyle = prefs.axiColorLo;
+                context.fill();
+                context.closePath();
+
+            }
+
+            // draw all the %45deg angle dots 
+            for (var i = 1, j = 8; i < j; i += 2) {
+
+                context.beginPath();
+                context.arc(
+                    centerX + (prefs.armSize.val * Math.cos((i * pi) / 4)),
+                    centerY + (prefs.armSize.val * Math.sin((i * pi) / 4)),
+                    2,
+                    0,
+                    pi2,
+                    true
+                );
+
+                context.fillStyle = prefs.axiColorLo;
+                context.fill();
+                context.closePath();
+
+            }
+
+        }
+
+        // draw the arc of theta if needed 
+        if (prefs.displayArc && degTheta !== 0) {
+
+            context.beginPath();
+
+            // draw a square for 90 deg angle if needed
+            if (prefs.snapToAngles && degTheta > 88 && degTheta < 92) {
+
+                context.moveTo(centerX + prefs.arcOffset + (prefs.lineWidth), centerY);
+                context.lineTo(centerX + prefs.arcOffset + (prefs.lineWidth), centerY - prefs.arcOffset - (prefs.lineWidth / 2));
+                context.lineTo(centerX, centerY - prefs.arcOffset - (prefs.lineWidth / 2));
+
+            }
+            else { // otherwise draw the arc
+            
+                if (prefs.snapToAngles === true) {
+                    if (pi2 - displayTheta === 0) {
+                        displayTheta = 0;
+                    }
+                    else if (displayTheta === 0) {
+                        displayTheta = pi2;
+                    }
+                }
+
+                context.arc(
+                    centerX,
+                    centerY,
+                    parseInt(prefs.lineWidth) + (
+                        degTheta < prefs.arcAdjust && !prefs.displayCap ?
+                        (prefs.arcOffset) + (1 - (degTheta / prefs.arcAdjust)) * (prefs.armSize.val - (prefs.lineWidth * 4) - prefs.arcOffset) :
+                        prefs.arcOffset
+                    ),
+                    0,
+                    pi2 - displayTheta,
+                    ( (pi2 - displayTheta === pi2) ? false : true)
+                );
+
+            }
+
+            context.strokeStyle = prefs.armColor;
+            context.lineWidth = 2 * prefs.lineWidth;
+            context.stroke();
+            context.closePath();
+
+        }
+
+        // draw the arm with a hole in it for caption if needed
+        if (prefs.displayCap) {
+
+            var innerSin = ((prefs.armSize.val / 2) - (prefs.angCapSize) + (prefs.lineWidth / 2)) * Math.sin(-displayTheta);
+            var innerCos = ((prefs.armSize.val / 2) - (prefs.angCapSize) + (prefs.lineWidth / 2)) * Math.cos(displayTheta);
+
+            // draw the inner part of the arm
+            context.beginPath();
+            context.moveTo(centerX, centerY);
+            context.lineTo(centerX + innerCos, centerY + innerSin);
+            context.strokeStyle = prefs.armColor;
+            context.lineWidth = prefs.lineWidth * 3;
+            context.stroke();
+            context.closePath();
+
+            // draw the outter part of the arm
+            context.beginPath();
+            innerSin = ((parseInt(prefs.armSize.val) / 2) + (parseInt(prefs.angCapSize)) - prefs.lineWidth / 2) * Math.sin(-displayTheta);
+            innerCos = ((parseInt(prefs.armSize.val) / 2) + (parseInt(prefs.angCapSize)) - prefs.lineWidth / 2) * Math.cos(displayTheta);
+            context.moveTo(centerX + innerCos, centerY + innerSin);
+            var outterSin = (prefs.armSize.val) * Math.sin(-displayTheta);
+            var outterCos = (prefs.armSize.val) * Math.cos(displayTheta);
+            context.lineTo(centerX + outterCos, centerY + outterSin);
+            context.strokeStyle = prefs.armColor;
+            context.lineWidth = prefs.lineWidth * 3;
+            context.stroke();
+            context.closePath();
+
+        }
+        else { // otherwise just draw a solid armature
+
+            context.beginPath();
+            context.moveTo(centerX, centerY);
+            context.lineTo(centerX + tmpCos, centerY + tmpSin);
+            context.strokeStyle = prefs.armColor;
+            context.lineWidth = prefs.lineWidth * 3;
+            context.stroke();
+            context.closePath();
+
+        }
+
+        // always put a circle at the tip of the armiture
+        context.beginPath();
+        context.arc(
+            centerX + tmpCos,
+            centerY + tmpSin,
+            prefs.lineWidth * 3.5,
+            0,
+            pi2,
+            true
+        );
+        context.fillStyle = prefs.armColor;
+        context.fill();
+        context.closePath();
+
+        // always put a circle at the base of the armiture
+        context.beginPath();
+        context.arc(
+            centerX,
+            centerY,
+            prefs.lineWidth * 3.5,
+            0,
+            pi2,
+            true
+        );
+        context.closePath();
+        context.fillStyle = prefs.armColor;
+        context.fill();
+
+        // draw sine line if turned on
+        if (prefs.displaySin) {
+
+            context.beginPath();
+            context.moveTo(centerX + tmpCos, centerY);
+            context.lineTo(centerX + tmpCos, centerY + tmpSin);
+            context.strokeStyle = prefs.sinColor;
+            context.lineWidth = prefs.lineWidth * 2;
+            context.stroke();
+            context.closePath();
+
+            // put a circle at the base of the sin line
+            context.beginPath();
+            context.arc(
+                centerX + tmpCos,
+                centerY,
+                prefs.lineWidth * 3,
+                0,
+                pi2,
+                true
+            );
+            context.fillStyle = prefs.sinColor;
+            context.fill();
+            context.closePath();
+
+        }
+
+        // draw cosine line if turned on
+        if (prefs.displayCos) {
+
+            context.beginPath();
+            context.moveTo(centerX, centerY);
+            context.lineTo(centerX + tmpCos, centerY);
+            context.strokeStyle = prefs.cosColor;
+            context.lineWidth = prefs.lineWidth * 2;
+            context.stroke();
+            context.closePath();
+
+            // put a circle at the tip of the cos line
+            context.beginPath();
+            context.arc(
+                centerX + tmpCos,
+                centerY,
+                prefs.lineWidth * 2.5,
+                0,
+                pi2,
+                true
+            );
+            context.fillStyle = prefs.cosColor;
+            context.fill();
+            context.closePath();
+
+
+        }
+
+        // sin caption
+        if (prefs.displaySin) {
+
+            // put a circle at the top of the sin line
+            context.beginPath();
+            context.arc(
+                centerX + tmpCos,
+                centerY + tmpSin,
+                prefs.lineWidth * 2,
+                0,
+                pi2,
+                true
+            );
+            context.fillStyle = prefs.sinColor;
+            context.fill();
+            context.closePath();
+
+            // display the value
+            if (prefs.displayCap) {
+                context.textBaseline = 'alphabetic';
+                context.font = (lineWidthInput.value / 10) * 15 + 'px Courier New';
+                context.fillStyle = '#ffffff';
+                context.textAlign = 'center';
+                var tmpVal = (-tmpSin / prefs.armSize.val).toFixed(3);
+
+                // put exact values if snapping to a snap point
+                if (
+                    prefs.snapToAngles &&
+                    prefs.degRad === false &&
+                    prefs.snapCapsVal > -1
+                ) {
+                    tmpVal = snapCaps[prefs.snapCapsVal].sin;
+                } else if (degTheta === 0) {
+                    tmpVal = "0.000";
+                } else if (degTheta === 360) {
+                    tmpVal = "0.000";
+                }
+
+                context.fillText(tmpVal, centerX + tmpCos, centerY + tmpSin + 5);
+                context.closePath();
+            }
+
+        }
+
+        // cos caption
+        if (prefs.displayCos) {
+
+            // put a circle at the base of the cos line
+            context.beginPath();
+            context.arc(
+                centerX,
+                centerY,
+                prefs.lineWidth * 2.5,
+                0,
+                pi2,
+                true
+            );
+            context.fillStyle = prefs.cosColor;
+            context.fill();
+            // display the value
+            if (prefs.displayCap) {
+                context.textBaseline = 'alphabetic';
+                context.font = (lineWidthInput.value / 10) * 15 + 'px Courier New';
+                context.fillStyle = '#ffffff';
+                context.textAlign = 'center';
+                var tmpVal = (tmpCos / prefs.armSize.val).toFixed(3);
+
+                // put exact values if snapping to a snap point
+                if (
+                    prefs.snapToAngles &&
+                    prefs.degRad === false &&
+                    prefs.snapCapsVal > -1
+                ) {
+                    tmpVal = snapCaps[prefs.snapCapsVal].cos;
+                } else if (degTheta === 270) {
+                    tmpVal = "0.000";
+                }
+
+                context.fillText(tmpVal, centerX, centerY + 4);
+                context.closePath();
+            }
+
+        }
+
+        // show angle value if needed
+        if (prefs.displayCap) {
+
+            // draw the circle for the hole
+            context.beginPath();
+            context.arc(
+                centerX + (prefs.armSize.val / 2) * Math.cos(displayTheta),
+                centerY + (prefs.armSize.val / 2) * Math.sin(-displayTheta),
+                prefs.angCapSize,
+                0,
+                pi2,
+                true
+            );
+            context.strokeStyle = prefs.armColor;
+            context.lineWidth = prefs.lineWidth * 1;
+            context.stroke();
+            context.fillStyle = 'rgba(0,0,0,0.25)';
+            context.fill();
+            context.closePath();
+
+            // put the actual angle value in the hole
+            context.beginPath();
+            context.textBaseline = 'alphabetic';
+            context.font = (angCapSizeInput.value / 100) * 48 + 'px Courier New';
+            context.fillStyle = prefs.armColor;
+            textAlign = 'center';
+            var tmpTxt = (prefs.degRad ? degTheta.toFixed(1) + '' + chars.deg : displayTheta.toFixed(2));
+
+            // put exact values if snapping to a snap point
+            if (
+                prefs.snapToAngles &&
+                prefs.degRad === false &&
+                prefs.snapCapsVal > -1
+            ) {
+                tmpTxt = snapCaps[prefs.snapCapsVal].rad;
+            } else if (degTheta === 0 && prefs.degRad === false) {
+                tmpTxt = "0.00";
+            } else if (degTheta === 360 && prefs.degRad === false) {
+                tmpTxt = "6.28";
+            }
+
+            context.fillText(
+                tmpTxt,
+                centerX + (prefs.armSize.val / 2) * Math.cos(displayTheta),
+                centerY + (prefs.armSize.val / 2) * Math.sin(-displayTheta) + 6
+            );
+            context.closePath();
+
+        }
+
+    }
+
+    // handle changes to inputs
+    armColorInput.addEventListener('input', function(e) {
+        prefs.armColor = this.value;
+        redraw();
+    }, false);
+
+    sinColorInput.addEventListener('input', function(e) {
+        prefs.sinColor = this.value;
+        redraw();
+    }, false);
+
+    cosColorInput.addEventListener('input', function(e) {
+        prefs.cosColor = this.value;
+        redraw();
+    }, false);
+
+    lineWidthInput.addEventListener('input', function(e) {
+        prefs.lineWidth = parseInt(this.value);
+        redraw();
+    }, false);
+
+    angCapSizeInput.addEventListener('input', function(e) {
+        prefs.angCapSize = this.value;
+        redraw();
+    }, false);
+
+    displayCapBox.addEventListener('change', function(e) {
+        prefs.displayCap = this.checked;
+        angCapSizeInput.disabled = !angCapSizeInput.disabled;
+        degRadButton.disabled = !degRadButton.disabled;
+        redraw();
+    }, false);
+
+    displaySinBox.addEventListener('change', function(e) {
+        prefs.displaySin = this.checked;
+        redraw();
+    }, false);
+
+    displayCosBox.addEventListener('change', function(e) {
+        prefs.displayCos = this.checked;
+        redraw();
+    }, false);
+
+    displayArcBox.addEventListener('change', function(e) {
+        prefs.displayArc = this.checked;
+        redraw();
+    }, false);
+
+    displayAxiBox.addEventListener('change', function(e) {
+        prefs.displayAxi = this.checked;
+        redraw();
+    }, false);
+
+    snapToAnglesBox.addEventListener('change', function(e) {
+        prefs.snapToAngles = this.checked;
+        redraw();
+    }, false);
+
+    degRadButton.addEventListener('click', function(e) {
+        prefs.degRad = prefs.degRad ? false : true;
+        degRadButton.value = prefs.degRad ? 'DEG | rad' : 'deg | RAD';
+        redraw();
+    }, false);
+
+    resetDefaultsButt.addEventListener('click', function() {
+        resetDefaultPreferences();
+        setUpFromPreferences();
+        redraw();
+    }, false);
+
+    // handle the prefs edit menu on/close
+    menu.initH = menu.offsetHeight + 'px';
+    menu.style.zIndex = 1000;
+    if (prefs.hideMenuOnOpen) {
+        prefs.menuHidden = true;
+        menu.style.height = '0px';
+    }
+    else if (prefs.menuHidden) {
+        prefs.menuHidden = true;
+        menu.style.height = '0px';
+    }
+    else {
+        prefs.menuHidden = false;
+        menu.style.height = menu.initH;
+    }
+
+    window.addEventListener('keydown', function(e) {
+        if (e.keyCode === 32 & e.ctrlKey) {
+            // open the prefs menu
+            menu.style.height = menu.style.height === '0px' ? menu.initH : '0px';
+            prefs.menuHidden = prefs.menuHidden === true ? false : true;
+        }
+    }, false);
+
+    // recenter on resize
+    window.addEventListener('resize', function(e) {
+
+        setUpFromPreferences();
+
+    }, false);
+
+    // save state when the page closes
+    window.onbeforeunload = function() {
+
+        storePrefs();
+        //return 'msg about leaving for realsies';
+
+    };
+
+    //////////////////////////////////////////////////////////////////////////
+    //////////////////////////////////////////////////////////////////////////
+    // begin
+
+    var InPrincipioErataVerbum = function() {
+
+        setUpFromPreferences();
+        redraw();
+
+    }();
+
+    //////////////////////////////////////////////////////////////////////////
+    //////////////////////////////////////////////////////////////////////////
+
+})(); // selfie on the moon!
+        
+</script>
+
+</body>
+</html>
