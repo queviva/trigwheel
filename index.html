@@ -1,6 +1,5 @@
 <!doctype html>
 <html>
-
 <head>
     
     <title>trigWheel</title>
@@ -76,7 +75,6 @@
     </style>
 
 </head>
-
 <body bgcolor="#ffffff">
 
     <canvas id="canvas0" height="500" width="500"></canvas>
@@ -118,13 +116,13 @@
         <br>
 
     </div>
-
+</body>
 <script>
 
 // debugg - reset local storage
 //localStorage.clear();
 
-(function() { // anonymouse closure
+(() => { // anonymouse closure
 
     var pizzaface,
     
@@ -274,6 +272,7 @@
 
     // method to store prefs locally
     function storePrefs() {
+        /* global localStorage*/
         localStorage.setItem(defPrefs.appName, JSON.stringify(prefs));
     }
 
@@ -339,7 +338,7 @@
     }
 
     // listen for mouse moving on the entire body, and rotate the armiture
-    window.addEventListener('mousemove', e => {
+    window.addEventListener(window.touchmove? 'touchmove' : 'mousemove', e => {
 
         // compute the angle of rotation between the mouse and the center
         var deltaX = pageCenter.x - e.pageX;
@@ -955,6 +954,4 @@
 })(); // selfie on the moon!
         
 </script>
-
-</body>
 </html>
